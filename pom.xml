@@ -8,10 +8,10 @@
         <relativePath />
     </parent>
     <groupId>io.jenkins.plugins</groupId>
-    <artifactId>demo</artifactId>
+    <artifactId>plugin</artifactId>
     <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
-    <name>TODO Plugin</name>
+    <name>Cyfast Plugin</name>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
     <licenses>
         <license>
