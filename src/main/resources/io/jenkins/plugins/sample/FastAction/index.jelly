@@ -1,0 +1,267 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:layout title="Greeting"> 
+        <l:side-panel> 
+            <st:include page="sidepanel.jelly" it="${it.run}" optional="true" /> 
+        </l:side-panel>
+        <l:main-panel> 
+            
+	    <h1>Test Execution Trends</h1>
+      
+
+      
+      <div id="columnchart_values" style="width: 900px; height: 300px;display: flex;
+                  flex-direction: row;
+                  justify-content:center;">
+
+      </div>
+      
+      <div style="display: flex;
+                  flex-direction: row;
+                  justify-content:flex-end;
+                  margin-top:100px;
+                  ">
+        <button id="consoleData" onclick="testSummary()" style="background-color: #0276FF;
+          border-radius: 8px;
+          border-style: none;
+          box-shadow: rgba(255, 255, 255, 0.26) 0 1px 2px inset;
+          box-sizing: border-box;
+          color: #fff;
+          cursor: pointer;
+          margin-right:30px;
+          
+          padding:10px;">
+            Download Test Summary Reports
+        </button>
+        <button id="executionData" onclick="ExecutionOutput()" style="background-color: #0276FF;
+          border-radius: 8px;
+          border-style: none;
+          box-shadow: rgba(255, 255, 255, 0.26) 0 1px 2px inset;
+          box-sizing: border-box;
+          color: #fff;
+          cursor: pointer;
+          margin-right:30px;
+          
+          padding:10px;">
+            Download Execution Log
+        </button>
+        <button id="summaryData" onclick="consoleOutput()" style="background-color: #0276FF;
+          border-radius: 8px;
+          border-style: none;
+          box-shadow: rgba(255, 255, 255, 0.26) 0 1px 2px inset;
+          box-sizing: border-box;
+          color: #fff;
+          
+          cursor: pointer;
+          margin-right:50px;
+
+          padding:10px;">
+            Download Console Log
+        </button>
+      </div>
+     
+
+     
+
+      
+        
+      
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    var passCount = 0;
+    var failedCount = 0;
+    var notExecutedCount = 0;
+    var errorCount = 0;
+     var apiUrl = "${it.urllink}"+"/Requirement/GetByOrchestrationTestExecutionTrends?OrchestrationID=" + "${it.orchestrationid}";
+      fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${it.accessToken}`,
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log("data",data);
+            var responseData = data[0];
+            drawChart(responseData);
+            
+            passCount = responseData.PassedCount;
+            failedCount = responseData.FailedCount;
+            notExecutedCount = responseData.NotExecutedCount;
+            errorCount = responseData.ErrorCount;
+            })
+          .catch(error => console.log(error));
+          function drawChart() {
+          google.charts.load("current", {packages:['corechart']});
+    google.charts.setOnLoadCallback(()=>{
+    
+      var data = google.visualization.arrayToDataTable([
+        ["Element", "Test Cases", { role: "style" } ],
+        ["Not Executed", notExecutedCount, "#b87333"],
+        ["Failed", failedCount, "red"],
+        ["Passed",passCount, "green"],
+        ["Error", errorCount, "color: #e5e4e2"]
+      ]);
+
+      var view = new google.visualization.DataView(data);
+      view.setColumns([0, 1,
+                       { calc: "stringify",
+                         sourceColumn: 1,
+                         type: "string",
+                         role: "annotation" },
+                       2]);
+
+      var options = {
+        title: "Test Execution Trends",
+        width: 600,
+        height: 400,
+        bar: {groupWidth: "55%"},
+        legend: { position: "none" },
+      };
+      var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
+      chart.draw(view, options);
+  });
+          }
+
+  </script>
+
+ <script type="text/javascript">
+  function testSummary(){
+    var apiUrl = "${it.urllink}"+"/TestExecutionResult/DownloadTestSummary?orchestrationID=" + "${it.orchestrationid}";
+      fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${it.accessToken}`,
+          }
+        })
+          .then((resp) => resp.blob())
+
+      .then((blob) => {
+        try {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = "Test Summary Reports.pdf";
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        } catch (error) {
+          alert("Orchestration not yet executed");
+          return;
+        }
+      })
+      .catch(() => alert("Error while downloading!"));
+  }
+  </script>
+
+   <script type="text/javascript">
+  function ExecutionOutput(){
+   
+    fetch(
+      
+        "${it.urllink}"+"/TestExecutionResult/GetByOrchestration?orchestrationId=" +
+        "${it.orchestrationid}",
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${it.accessToken}`,
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        
+        let splitString = res[0].LogPath.split(
+          "result_"
+          
+        );
+        
+        
+        fetch(
+          
+            "${it.urllink}"+"/TestExecutionResult/DownloadExecutionLog?orchestrationID=" +
+            "${it.orchestrationid}" 
+            ,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${it.accessToken}`,
+            },
+          }
+        )
+          
+          .then((resp) => resp.blob())
+    
+          .then((blob) => {
+            try {
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.style.display = "none";
+              a.href = url;
+              // a.href = url;
+              // the filename you want
+              a.download = "ExecutionLog.pdf";
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              //alert("your file has downloaded!"); // or you know, something with better UX...
+            } catch (error) {
+              alert("Orchestration not yet executed");
+              return;
+            }
+          })
+        //alert("your file has downloaded!"); // or you know, something with better UX...
+      })
+      .catch(() => alert("oh no!"));
+   
+   }
+  </script>
+ 
+
+  <script type="text/javascript">
+  function consoleOutput(){
+    var apiUrl = "${it.urllink}"+"/ConsoleLog/DownloadConsoleLog?orchestrationID=" + "${it.orchestrationid}";
+      fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${it.accessToken}`,
+          }
+        })
+          .then((resp) => resp.blob())
+
+      .then((blob) => {
+        try {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = "ConsoleLog.pdf";
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        } catch (error) {
+          alert("Orchestration not yet executed");
+          return;
+        }
+      })
+      .catch(() => alert("Error while downloading!"));
+  }
+  </script>
+ 
+  
+
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
