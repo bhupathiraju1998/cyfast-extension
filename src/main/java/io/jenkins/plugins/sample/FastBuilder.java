@@ -195,9 +195,7 @@ public class FastBuilder extends Builder implements SimpleBuildStep {
                 return FormValidation.error(Messages.FastBuilder_DescriptorImpl_errors_missingName());
             if (value.length() < 4)
                 return FormValidation.warning(Messages.FastBuilder_DescriptorImpl_warnings_tooShort());
-            if (!useFrench && value.matches(".*[éáàç].*")) {
-                return FormValidation.warning(Messages.FastBuilder_DescriptorImpl_warnings_reallyFrench());
-            }
+            
             return FormValidation.ok();
         }
 
